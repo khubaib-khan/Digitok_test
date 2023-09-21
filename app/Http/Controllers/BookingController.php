@@ -35,17 +35,26 @@ class BookingController extends Controller
      */
     public function index(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
+        $user = $request->__authenticatedUser;
+        $user_id = $request->get('user_id');
 
+        if($user_id) {
             $response = $this->repository->getUsersJobs($user_id);
-
         }
-        elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
+        elseif($this->isAdminOrSuperAdmin($user))
         {
             $response = $this->repository->getAll($request);
+        }else{
+            $response="";
         }
-
+        
         return response($response);
+    }
+
+    private function isAdminOrSuperAdmin($user)
+    {
+        $adminRoles = [env('ADMIN_ROLE_ID'), env('SUPERADMIN_ROLE_ID')];
+        return in_array($user->user_type, $adminRoles);
     }
 
     /**
@@ -107,8 +116,9 @@ class BookingController extends Controller
      */
     public function getHistory(Request $request)
     {
-        if($user_id = $request->get('user_id')) {
-
+        $user_id = $request->get('user_id');
+        if($user_id) {
+            // 0 or 1 is saved in variable if assigned inside if condition
             $response = $this->repository->getUsersJobsHistory($user_id, $request);
             return response($response);
         }
@@ -216,20 +226,20 @@ class BookingController extends Controller
             $session = "";
         }
 
-        if ($data['flagged'] == 'true') {
+        if ($data['flagged'] == 'true') { // if its boolean thats not the proper way to check it. if($data['flagged'])
             if($data['admincomment'] == '') return "Please, add comment";
             $flagged = 'yes';
         } else {
             $flagged = 'no';
         }
         
-        if ($data['manually_handled'] == 'true') {
+        if ($data['manually_handled'] == 'true') { // if its boolean thats not the proper way to check it. if($data['manually_handled'])
             $manually_handled = 'yes';
         } else {
             $manually_handled = 'no';
         }
 
-        if ($data['by_admin'] == 'true') {
+        if ($data['by_admin'] == 'true') { //same case as above
             $by_admin = 'yes';
         } else {
             $by_admin = 'no';
